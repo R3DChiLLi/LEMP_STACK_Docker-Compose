@@ -1,0 +1,42 @@
+- name: Docker setup
+  hosts: container_servers
+  become: yes
+  gather_facts: False
+  tasks:
+    - name: Copy files to servers
+      copy:
+        src: /home/ec2-user/ansible_project_2/LEMP_STACK_Docker-Compose
+        dest: /home/ec2-user/
+
+    - name: Install docker
+      ansible.builtin.yum:
+        name: docker
+        state: present
+    
+    - name: Start docker
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Download Docker Compose binary
+      ansible.builtin.shell: |
+        curl -L "https://github.com/docker/compose/releases/download/v2.19.0/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+      args:
+        creates: /usr/local/bin/docker-compose
+
+    - name: Make Docker Compose executable
+      ansible.builtin.file:
+        path: /usr/local/bin/docker-compose
+        mode: 'u+x'
+
+    - name: Run Docker Compose file
+      ansible.builtin.shell: |
+        docker-compose up -d
+      args:
+        chdir: /home/ec2-user/LEMP_STACK_Docker-Compose/
+
+    # - name: test docker-compose
+    #   docker_compose:
+    #     project_src: tmp/
+    #     state: present
